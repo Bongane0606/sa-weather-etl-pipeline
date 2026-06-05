@@ -60,18 +60,27 @@ def load_to_csv(transformed_data):
 
 def preview_csv():
     """
-    Reads and prints the CSV file so we can verify it looks correct.
+    Reads and prints the CSV file in a clean, readable table format.
     """
     print("\n📊 Preview of saved data:")
     print("-" * 80)
 
     with open(OUTPUT_FILE, mode="r") as csv_file:
         reader = csv.DictReader(csv_file)
-        for row in reader:
-            print(row)
+        rows = list(reader)
 
-    print("-" * 80)
+        # Print each city as a clean readable block
+        for row in rows[-5:]:  # Only show the last 5 rows (most recent run)
+            print(f"🏙️  City:        {row['city']}, {row['country']}")
+            print(f"🌡️  Temperature: {row['temperature_c']}°C  (Feels like {row['feels_like_c']}°C)")
+            print(f"🔼  High/Low:    {row['temp_max_c']}°C / {row['temp_min_c']}°C")
+            print(f"💧  Humidity:    {row['humidity_percent']}%")
+            print(f"💨  Wind Speed:  {row['wind_speed_mps']} m/s")
+            print(f"⛅  Condition:   {row['condition']}")
+            print(f"🕐  Extracted:   {row['extracted_at']}")
+            print("-" * 80)
 
+    print(f"📁 Total records in file: {len(rows)}")
 
 # Test this file on its own using fake transformed data
 if __name__ == "__main__":

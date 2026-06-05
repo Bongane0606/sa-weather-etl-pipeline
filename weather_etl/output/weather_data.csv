@@ -1,7 +1,6 @@
 city,country,temperature_c,feels_like_c,temp_min_c,temp_max_c,humidity_percent,wind_speed_mps,condition,extracted_at
-Johannesburg,ZA,18.5,17.2,15.0,21.0,65,3.5,clear sky,2026-06-05 08:30:00
-Cape Town,ZA,14.0,13.0,11.0,16.0,80,5.2,light rain,2026-06-05 08:30:00
-Johannesburg,ZA,8.21,8.21,7.81,9.37,69,0.89,clear sky,2026-06-05 10:22:32
-Cape Town,ZA,14.62,13.99,14.04,15.19,71,0.89,clear sky,2026-06-05 10:22:32
-Durban,ZA,18.2,17.72,18.2,18.2,63,5.45,clear sky,2026-06-05 10:22:32
-Pretoria,ZA,11.91,10.59,10.87,13.66,55,0.89,clear sky,2026-06-05 10:22:32
+Johannesburg,ZA,8.51,8.51,7.73,9.35,71,0.89,clear sky,2026-06-05 10:49:38
+Cape Town,ZA,15.33,14.77,14.38,16.06,71,0.89,clear sky,2026-06-05 10:49:38
+Durban,ZA,21.96,21.57,21.71,21.96,52,4.47,clear sky,2026-06-05 10:49:38
+Pretoria,ZA,12.92,11.63,11.43,14.21,52,0.89,clear sky,2026-06-05 10:49:38
+Springs,ZA,9.37,7.76,9.37,9.37,45,3,clear sky,2026-06-05 10:49:38
