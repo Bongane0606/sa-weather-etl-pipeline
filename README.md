@@ -1,160 +1,372 @@
 # 🌦️ SA Weather ETL Pipeline
 
-A Python-based ETL (Extract, Transform, Load) pipeline that pulls real-time weather data
-for major South African cities using the OpenWeatherMap API, transforms it into a clean
-structured format, and stores it in a CSV file for analysis.
+<p align="center">
+
+![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge\&logo=python)
+![ETL](https://img.shields.io/badge/Data-Engineering-green?style=for-the-badge)
+![API](https://img.shields.io/badge/OpenWeatherMap-API-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-red?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
+
+</p>
+
+<p align="center">
+A modern Python ETL pipeline that collects <strong>real-time weather data</strong> for major South African cities, transforms it into clean structured data, and exports it into CSV for analysis and reporting.
+</p>
 
 ---
 
-## 📌 Project Overview
+# 📖 Table of Contents
 
-This project demonstrates a foundational data engineering concept — building an automated
-data pipeline that moves data from a source (API), transforms it, and loads it into a
-destination (CSV / data store).
-
-**Cities tracked:**
-- Johannesburg
-- Cape Town
-- Durban
-- Pretoria
-
----
-
-## 🏗️ Pipeline Architecture
-EXTRACT                   TRANSFORM                  LOAD
-───────                   ─────────                  ────
-OpenWeatherMap API   →    Clean & restructure   →    CSV File
-(Raw JSON data)           (Select fields,            (output/weather_data.csv)
-format timestamps)
+* Overview
+* Features
+* Architecture
+* Pipeline Workflow
+* Project Structure
+* Tech Stack
+* Installation
+* Usage
+* Sample Output
+* Dataset
+* Future Improvements
+* Contributing
+* Author
+* License
 
 ---
 
-## 📁 Project Structure
+# 🚀 Overview
+
+This project demonstrates the core concepts of **Data Engineering** by implementing an ETL (Extract, Transform, Load) pipeline.
+
+The application connects to the **OpenWeatherMap API**, retrieves live weather information, cleans and restructures the raw JSON data, and stores the results as a CSV dataset ready for analytics or dashboarding.
+
+### 🌍 Cities Currently Supported
+
+* Johannesburg
+* Pretoria
+* Durban
+* Cape Town
+
+---
+
+# ✨ Features
+
+✅ Real-time weather data collection
+
+✅ Automated ETL workflow
+
+✅ Clean and structured CSV output
+
+✅ Modular Python architecture
+
+✅ Easy to extend with more cities
+
+✅ Beginner-friendly Data Engineering project
+
+---
+
+# 🏗️ Pipeline Architecture
+
+```text
+                 SA WEATHER ETL PIPELINE
+
+         🌐 OpenWeatherMap API
+                    │
+                    ▼
+              📡 EXTRACT DATA
+          Retrieve Raw JSON Response
+                    │
+                    ▼
+            🔧 TRANSFORM DATA
+      Clean • Filter • Format • Rename
+                    │
+                    ▼
+               💾 LOAD DATA
+          Export to CSV File
+                    │
+                    ▼
+          📊 Ready for Analytics
+```
+
+---
+
+# 🔄 Workflow Diagram
+
+```mermaid
+flowchart LR
+
+A[OpenWeatherMap API] --> B[Extract.py]
+
+B --> C[Transform.py]
+
+C --> D[Load.py]
+
+D --> E[weather_data.csv]
+```
+
+---
+
+# 📁 Project Structure
+
+```text
 sa-weather-etl-pipeline/
 │
 ├── weather_etl/
-│   ├── extract.py        # Pulls raw data from OpenWeatherMap API
-│   ├── transform.py      # Cleans and restructures raw data
-│   ├── load.py           # Saves transformed data to CSV
-│   └── pipeline.py       # Orchestrates the full ETL pipeline
+│   ├── extract.py
+│   ├── transform.py
+│   ├── load.py
+│   └── pipeline.py
 │
 ├── output/
-│   └── weather_data.csv  # Final output (auto-generated on run)
+│   └── weather_data.csv
 │
-├── .venv/                # Virtual environment (not tracked by Git)
 ├── .gitignore
-└── README.md
+├── README.md
+└── requirements.txt
+```
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
 
-| Tool | Purpose |
-|------|---------|
-| Python 3 | Core programming language |
-| Requests | HTTP library for API calls |
-| CSV (stdlib) | Writing structured output files |
-| OpenWeatherMap API | Real-time weather data source |
+| Technology         | Purpose                   |
+| ------------------ | ------------------------- |
+| Python             | Core programming language |
+| Requests           | API communication         |
+| CSV                | Data storage              |
+| OpenWeatherMap API | Weather data source       |
+| Git & GitHub       | Version control           |
 
 ---
 
-## ⚙️ Setup & Installation
+# ⚙️ Installation
 
-### 1. Clone the repository
+## 1️⃣ Clone the repository
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/sa-weather-etl-pipeline.git
+
 cd sa-weather-etl-pipeline
 ```
 
-### 2. Create and activate a virtual environment
+---
+
+## 2️⃣ Create a virtual environment
+
+Linux/macOS
+
 ```bash
 python3 -m venv .venv
 
-# On Linux/Mac:
 source .venv/bin/activate
+```
 
-# On Windows:
+Windows
+
+```bash
+python -m venv .venv
+
 .venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+---
+
+## 3️⃣ Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+or
+
 ```bash
 pip install requests
 ```
 
-### 4. Add your API key
-Get a free API key from [OpenWeatherMap](https://openweathermap.org/api),
-then open `weather_etl/extract.py` and replace:
+---
+
+## 4️⃣ Configure your API key
+
+Create an account at:
+
+https://openweathermap.org/api
+
+Then update:
+
 ```python
-API_KEY = "your_api_key_here"
+API_KEY = "YOUR_API_KEY"
 ```
 
-### 5. Run the pipeline
+inside
+
+```text
+weather_etl/extract.py
+```
+
+---
+
+# ▶️ Running the Pipeline
+
 ```bash
 cd weather_etl
-python3 pipeline.py
+
+python pipeline.py
 ```
 
 ---
 
-## 📊 Sample Output
+# 📷 Example Console Output
+
+```text
 ==================================================
 SA WEATHER ETL PIPELINE
-Started at: 2026-06-05 08:30:00
-📡 STEP 1: EXTRACTING data from API...
-✅ Successfully extracted data for Johannesburg
-✅ Successfully extracted data for Cape Town
-✅ Successfully extracted data for Durban
-✅ Successfully extracted data for Pretoria
-🔧 STEP 2: TRANSFORMING raw data...
-✅ Transformed data for Johannesburg
-...
-💾 STEP 3: LOADING data into CSV...
-✅ Loaded data for Johannesburg into CSV
-...
 ==================================================
-✅ PIPELINE COMPLETED SUCCESSFULLY
+
+📡 STEP 1 : EXTRACT
+
+✅ Johannesburg
+
+✅ Pretoria
+
+✅ Durban
+
+✅ Cape Town
+
+🔧 STEP 2 : TRANSFORM
+
+✅ Formatting timestamps
+
+✅ Cleaning JSON
+
+✅ Selecting required fields
+
+💾 STEP 3 : LOAD
+
+✅ weather_data.csv created
+
+==================================================
+
+🎉 PIPELINE COMPLETED SUCCESSFULLY
+```
 
 ---
 
-## 📈 Data Fields Captured
+# 📄 Example CSV Output
 
-| Field | Description |
-|-------|-------------|
-| `city` | City name |
-| `country` | Country code (ZA) |
-| `temperature_c` | Current temperature in Celsius |
-| `feels_like_c` | Feels like temperature in Celsius |
-| `temp_min_c` | Minimum temperature |
-| `temp_max_c` | Maximum temperature |
-| `humidity_percent` | Humidity percentage |
-| `wind_speed_mps` | Wind speed in metres per second |
-| `condition` | Weather condition (e.g. clear sky) |
-| `extracted_at` | Timestamp of when data was collected |
+| City         | Temperature | Humidity | Weather | Wind Speed |
+| ------------ | ----------: | -------: | ------- | ---------: |
+| Johannesburg |      16.4°C |      54% | Clouds  |        3.2 |
+| Pretoria     |      18.1°C |      49% | Clear   |        2.6 |
+| Durban       |      22.5°C |      71% | Rain    |        4.3 |
+| Cape Town    |      15.0°C |      63% | Clear   |        5.1 |
 
 ---
 
-## 🚀 Future Improvements
+# 📊 Dataset Fields
 
-- [ ] Store data in a PostgreSQL database instead of CSV
-- [ ] Add Apache Airflow to schedule the pipeline automatically
-- [ ] Add data quality checks (missing values, outliers)
-- [ ] Visualise the data using a dashboard (Matplotlib / Power BI)
-- [ ] Containerise the pipeline using Docker
-- [ ] Expand to more South African cities
-
----
-
-## 👤 Author
-
-**Letsoenyo Clen Bongane**
-Aspiring Data Engineer | Currently studying at WeThinkCode_
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/Bongane_Clen)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-black)](https://github.com/Bongane0606)
+| Field            | Description            |
+| ---------------- | ---------------------- |
+| city             | City name              |
+| country          | Country code           |
+| temperature_c    | Current temperature    |
+| feels_like_c     | Feels-like temperature |
+| temp_min_c       | Minimum temperature    |
+| temp_max_c       | Maximum temperature    |
+| humidity_percent | Humidity               |
+| wind_speed_mps   | Wind speed             |
+| condition        | Weather description    |
+| extracted_at     | Extraction timestamp   |
 
 ---
 
-## 📄 License
+# 💡 Why I Built This
 
-This project is open source and available under the [MIT License](LICENSE).
+I created this project to strengthen my understanding of **Data Engineering fundamentals**, specifically the ETL process. It helped me gain practical experience working with external APIs, transforming raw data into structured datasets, and building modular Python applications.
+
+This project also serves as a foundation for future enhancements such as database integration, workflow orchestration, and data visualization.
+
+---
+
+# 🚀 Future Improvements
+
+* [ ] PostgreSQL integration
+* [ ] Apache Airflow scheduling
+* [ ] Docker support
+* [ ] Data quality validation
+* [ ] Logging
+* [ ] Unit tests
+* [ ] Dashboard using Power BI
+* [ ] Interactive visualisations
+* [ ] Support all South African provinces
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome!
+
+If you'd like to improve this project:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to GitHub
+5. Open a Pull Request
+
+---
+
+# 🐛 Troubleshooting
+
+### API returns 401
+
+Your API key is missing or invalid.
+
+---
+
+### CSV not generated
+
+Ensure:
+
+* Internet connection is available
+* API key is correct
+* `output/` folder exists
+
+---
+
+### ModuleNotFoundError
+
+Install dependencies:
+
+```bash
+pip install requests
+```
+
+---
+
+# 👨‍💻 Author
+
+## **Letsoenyo Clen Bongane**
+
+Aspiring **Data Engineer** passionate about building scalable data pipelines and transforming raw data into meaningful insights.
+
+**Connect with me**
+
+* 💼 LinkedIn: https://linkedin.com/in/Bongane_Clen
+* 💻 GitHub: https://github.com/Bongane0606
+
+---
+
+# ⭐ Support
+
+If you found this project useful, consider giving it a ⭐ on GitHub.
+
+It helps others discover the project and motivates future improvements.
+
+---
+
+# 📄 License
+
+This project is licensed under the **MIT License**.
+
+Feel free to use, modify, and distribute it in accordance with the license terms.
