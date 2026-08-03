@@ -4,8 +4,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
-from weather_etl.transform import transform_city_weather, transform_all
-from weather_etl.validate import validate_city, validate_all
+from transform import transform_city_weather, transform_all
+from validate import validate_city, validate_all
 def make_raw_city(name="Johannesburg", temp=18.5, humidity=65, wind=3.5):
     """Helper that builds a fake raw API response."""
     return {

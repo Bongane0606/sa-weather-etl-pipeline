@@ -2,8 +2,8 @@ from extract import extract_all_cities
 from transform import transform_all
 from load import load_to_csv, preview_csv
 from datetime import datetime
-from weather_etl.logger import get_logger
-from weather_etl.validate import validate_all   
+from logger import get_logger
+from validate import validate_all   
 
 def run_pipeline():
     """
