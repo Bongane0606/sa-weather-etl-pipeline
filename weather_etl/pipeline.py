@@ -17,33 +17,29 @@ def run_pipeline():
     print(f"   Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
 
-    # ── STEP 1: EXTRACT ──────────────────────────────
-    print("\n📡 STEP 1: EXTRACTING data from API...")
+    print("\nSTEP 1: EXTRACTING data from API...")
     raw_data = extract_all_cities()
 
     if not raw_data:
-        print("❌ Pipeline stopped — no data was extracted.")
+        print(" Pipeline stopped — no data was extracted.")
         print("   Check your API key or internet connection.")
         return
 
-    print(f"✅ Extracted data for {len(raw_data)} cities\n")
+    print(f"Extracted data for {len(raw_data)} cities\n")
 
-    # ── STEP 2: TRANSFORM ────────────────────────────
-    print("🔧 STEP 2: TRANSFORMING raw data...")
+    
+    print("STEP 2: TRANSFORMING raw data...")
     transformed_data = transform_all(raw_data)
-    print(f"✅ Transformed {len(transformed_data)} cities\n")
+    print(f"Transformed {len(transformed_data)} cities\n")
 
-    # ── STEP 3: LOAD ─────────────────────────────────
-    print("💾 STEP 3: LOADING data into CSV...")
+    print("STEP 3: LOADING data into CSV...")
     load_to_csv(transformed_data)
 
-    # ── DONE ─────────────────────────────────────────
     print("\n" + "=" * 50)
-    print("   ✅ PIPELINE COMPLETED SUCCESSFULLY")
+    print("  PIPELINE COMPLETED SUCCESSFULLY")
     print(f"   Finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
 
-    # Show a preview of what was saved
     preview_csv()
 
 

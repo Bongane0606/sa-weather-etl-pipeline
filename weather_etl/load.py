@@ -3,11 +3,9 @@ import os
 from datetime import datetime
 
 
-# Where we want to save our data
 OUTPUT_FOLDER = "output"
 OUTPUT_FILE = os.path.join(OUTPUT_FOLDER, "weather_data.csv")
 
-# The column names for our CSV file
 CSV_COLUMNS = [
     "city",
     "country",
@@ -28,7 +26,7 @@ def create_output_folder():
     """
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
-        print(f"📁 Created output folder: {OUTPUT_FOLDER}")
+        print(f"Created output folder: {OUTPUT_FOLDER}")
 
 
 def load_to_csv(transformed_data):
@@ -39,52 +37,48 @@ def load_to_csv(transformed_data):
     """
     create_output_folder()
 
-    # Check if file already exists (so we know whether to write headers)
     file_exists = os.path.exists(OUTPUT_FILE)
 
     with open(OUTPUT_FILE, mode="a", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=CSV_COLUMNS)
 
-        # Only write the header row if the file is new
         if not file_exists:
             writer.writeheader()
-            print("📝 Created new CSV file with headers")
+            print("Created new CSV file with headers")
 
-        # Write each city as a row
         for city_data in transformed_data:
             writer.writerow(city_data)
-            print(f"✅ Loaded data for {city_data['city']} into CSV")
+            print(f"Loaded data for {city_data['city']} into CSV")
 
-    print(f"\n💾 Data saved to: {OUTPUT_FILE}")
+    print(f"\nData saved to: {OUTPUT_FILE}")
 
 
 def preview_csv():
     """
     Reads and prints the CSV file in a clean, readable table format.
     """
-    print("\n📊 Preview of saved data:")
+    print("\nPreview of saved data:")
     print("-" * 80)
 
     with open(OUTPUT_FILE, mode="r") as csv_file:
         reader = csv.DictReader(csv_file)
         rows = list(reader)
 
-        # Print each city as a clean readable block
-        for row in rows[-5:]:  # Only show the last 5 rows (most recent run)
-            print(f"🏙️  City:        {row['city']}, {row['country']}")
-            print(f"🌡️  Temperature: {row['temperature_c']}°C  (Feels like {row['feels_like_c']}°C)")
-            print(f"🔼  High/Low:    {row['temp_max_c']}°C / {row['temp_min_c']}°C")
-            print(f"💧  Humidity:    {row['humidity_percent']}%")
-            print(f"💨  Wind Speed:  {row['wind_speed_mps']} m/s")
-            print(f"⛅  Condition:   {row['condition']}")
-            print(f"🕐  Extracted:   {row['extracted_at']}")
+        for row in rows[-5:]:  
+            print(f"City:        {row['city']}, {row['country']}")
+            print(f"Temperature: {row['temperature_c']}°C  (Feels like {row['feels_like_c']}°C)")
+            print(f"High/Low:    {row['temp_max_c']}°C / {row['temp_min_c']}°C")
+            print(f"Humidity:    {row['humidity_percent']}%")
+            print(f"Wind Speed:  {row['wind_speed_mps']} m/s")
+            print(f"Condition:   {row['condition']}")
+            print(f"Extracted:   {row['extracted_at']}")
             print("-" * 80)
 
-    print(f"📁 Total records in file: {len(rows)}")
+    print(f"Total records in file: {len(rows)}")
 
-# Test this file on its own using fake transformed data
+
 if __name__ == "__main__":
-    # Fake transformed data (output from transform.py)
+
     fake_transformed_data = [
         {
             "city": "Johannesburg",
