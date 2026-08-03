@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from logger import get_logger
+from weather_etl.logger import get_logger
 
 
 OUTPUT_FOLDER = "output"

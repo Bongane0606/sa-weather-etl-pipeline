@@ -1,0 +1,28 @@
+2026-08-03 09:40:43 | INFO     | transform    | Starting transformation for 2 cities
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Joburg
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Cape Town
+2026-08-03 09:40:43 | INFO     | transform    | Transformation complete — 2 cities transformed
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Johannesburg
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Johannesburg
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Durban
+2026-08-03 09:40:43 | INFO     | transform    | Transformed data for Johannesburg
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'humidity_percent' value -10.0 is outside expected range (0 to 100)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'humidity_percent' value 150.0 is outside expected range (0 to 100)
+2026-08-03 09:40:43 | WARNING  | validate     | [] FAILED — Missing or empty field: 'city'
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — temp_min (25.0) is greater than temp_max (10.0)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temperature_c' value 99.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'feels_like_c' value 97.5 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temp_min_c' value 97.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temp_max_c' value 101.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temperature_c' value -50.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'feels_like_c' value -51.5 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temp_min_c' value -55.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | WARNING  | validate     | [Johannesburg] FAILED — 'temp_max_c' value -45.0 is outside expected range (-20 to 60)
+2026-08-03 09:40:43 | INFO     | validate     | [Johannesburg] PASSED all quality checks 
+2026-08-03 09:40:43 | INFO     | validate     | Starting data quality validation for 0 cities
+2026-08-03 09:40:43 | INFO     | validate     | Validation complete — 0 passed, 0 failed
+2026-08-03 09:40:43 | INFO     | validate     | Starting data quality validation for 2 cities
+2026-08-03 09:40:43 | INFO     | validate     | [Durban] PASSED all quality checks 
+2026-08-03 09:40:43 | WARNING  | validate     | [FakeCity] FAILED — 'humidity_percent' value 999.0 is outside expected range (0 to 100)
+2026-08-03 09:40:43 | INFO     | validate     | Validation complete — 1 passed, 1 failed
+2026-08-03 09:40:43 | WARNING  | validate     | 1 cities failed validation and were NOT loaded

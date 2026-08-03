@@ -1,5 +1,5 @@
 from datetime import datetime
-from logger import get_logger
+from weather_etl.logger import get_logger
 
 
 def transform_city_weather(raw_data):
