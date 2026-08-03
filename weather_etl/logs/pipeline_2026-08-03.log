@@ -1,0 +1,37 @@
+2026-08-03 09:21:50 | INFO     | pipeline     | ==================================================
+2026-08-03 09:21:50 | INFO     | pipeline     | SA WEATHER ETL PIPELINE STARTED
+2026-08-03 09:21:50 | INFO     | pipeline     | Started at: 2026-08-03 09:21:50
+2026-08-03 09:21:50 | INFO     | pipeline     | ==================================================
+2026-08-03 09:21:50 | INFO     | pipeline     | STEP 1: EXTRACTING data from API...
+2026-08-03 09:21:50 | INFO     | extract      | Starting extraction for 5 cities
+2026-08-03 09:21:50 | INFO     | extract      | Extracting data for Johannesburg...
+2026-08-03 09:21:51 | INFO     | extract      | Successfully extracted data for Johannesburg
+2026-08-03 09:21:51 | INFO     | extract      | Extracting data for Cape Town...
+2026-08-03 09:21:52 | INFO     | extract      | Successfully extracted data for Cape Town
+2026-08-03 09:21:52 | INFO     | extract      | Extracting data for Durban...
+2026-08-03 09:21:53 | INFO     | extract      | Successfully extracted data for Durban
+2026-08-03 09:21:53 | INFO     | extract      | Extracting data for Pretoria...
+2026-08-03 09:21:53 | INFO     | extract      | Successfully extracted data for Pretoria
+2026-08-03 09:21:53 | INFO     | extract      | Extracting data for Springs...
+2026-08-03 09:21:54 | INFO     | extract      | Successfully extracted data for Springs
+2026-08-03 09:21:54 | INFO     | extract      | Extraction complete — 5/5 cities successful
+2026-08-03 09:21:54 | INFO     | pipeline     | STEP 2: TRANSFORMING raw data...
+2026-08-03 09:21:54 | INFO     | transform    | Starting transformation for 5 cities
+2026-08-03 09:21:54 | INFO     | transform    | Transformed data for Johannesburg
+2026-08-03 09:21:54 | INFO     | transform    | Transformed data for Cape Town
+2026-08-03 09:21:54 | INFO     | transform    | Transformed data for Durban
+2026-08-03 09:21:54 | INFO     | transform    | Transformed data for Pretoria
+2026-08-03 09:21:54 | INFO     | transform    | Transformed data for Springs
+2026-08-03 09:21:54 | INFO     | transform    | Transformation complete — 5 cities transformed
+2026-08-03 09:21:54 | INFO     | pipeline     | STEP 3: LOADING data into CSV...
+2026-08-03 09:21:54 | INFO     | load         | Loaded data for Johannesburg into CSV
+2026-08-03 09:21:54 | INFO     | load         | Loaded data for Cape Town into CSV
+2026-08-03 09:21:54 | INFO     | load         | Loaded data for Durban into CSV
+2026-08-03 09:21:54 | INFO     | load         | Loaded data for Pretoria into CSV
+2026-08-03 09:21:54 | INFO     | load         | Loaded data for Springs into CSV
+2026-08-03 09:21:54 | INFO     | load         | Data saved to: output/weather_data.csv
+2026-08-03 09:21:54 | INFO     | pipeline     | ==================================================
+2026-08-03 09:21:54 | INFO     | pipeline     | PIPELINE COMPLETED SUCCESSFULLY
+2026-08-03 09:21:54 | INFO     | pipeline     | Finished at: 2026-08-03 09:21:54
+2026-08-03 09:21:54 | INFO     | pipeline     | ==================================================
+2026-08-03 09:21:54 | INFO     | load         | Generating data preview...
