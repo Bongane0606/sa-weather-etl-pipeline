@@ -1,4 +1,27 @@
-version: '3.8'
+x-airflow-common:
+  &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+    # Same weather-pipeline env vars the "app" service uses, so the DAG's
+    # BashOperator can run pipeline.py exactly as-is inside this container.
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_NAME: ${DB_NAME}
+    DB_USER: ${DB_USER}
+    DB_PASSWORD: ${DB_PASSWORD}
+    API_KEY: ${API_KEY}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./weather_etl:/opt/airflow/weather_etl
+    - airflow_logs:/opt/airflow/logs
+  user: "${AIRFLOW_UID:-50000}:0"
 
 services:
   postgres:
@@ -25,8 +48,6 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # DB_HOST is overridden to the service name so the app can reach
-      # postgres over the docker network -- localhost won't work in a container
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME}
@@ -37,5 +58,57 @@ services:
       - ./output:/app/output
       - ./logs:/app/logs
 
+  # --- Airflow: separate metadata DB from the weather data DB on purpose ---
+  airflow-postgres:
+    image: postgres:15
+    container_name: airflow_postgres
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow_init
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+    # No entrypoint override here on purpose -- the image's own /entrypoint
+    # script runs first and registers our arbitrary AIRFLOW_UID into
+    # /etc/passwd before handing off to this command. Skipping it (e.g. by
+    # setting entrypoint: /bin/bash) is what caused the "no username" error.
+    command: ["bash", "-c", "airflow db migrate && (airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true)"]
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow_webserver
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    command: webserver
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow_scheduler
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: scheduler
+
 volumes:
   weather_data:
+  airflow_db_data:
+  airflow_logs:
