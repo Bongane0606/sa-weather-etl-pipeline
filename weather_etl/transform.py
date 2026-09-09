@@ -10,6 +10,7 @@ def transform_city_weather(raw_data):
     """
     transformed = {
         "city":             raw_data["name"],
+        "province":         raw_data.get("province", "Unknown"),
         "country":          raw_data["sys"]["country"],
         "temperature_c":    raw_data["main"]["temp"],
         "feels_like_c":     raw_data["main"]["feels_like"],
@@ -44,6 +45,7 @@ if __name__ == "__main__":
     fake_raw_data = [
         {
             "name": "Johannesburg",
+            "province": "Gauteng",
             "sys": {"country": "ZA"},
             "main": {
                 "temp": 18.5,
@@ -57,6 +59,7 @@ if __name__ == "__main__":
         },
         {
             "name": "Cape Town",
+            "province": "Western Cape",
             "sys": {"country": "ZA"},
             "main": {
                 "temp": 14.0,

@@ -14,7 +14,7 @@ OUTPUT_FOLDER = os.path.join(BASE_DIR, "output")
 OUTPUT_FILE = os.path.join(OUTPUT_FOLDER, "weather_data.csv")
 
 CSV_COLUMNS = [
-    "city", "country", "temperature_c", "feels_like_c",
+    "city", "province", "country", "temperature_c", "feels_like_c",
     "temp_min_c", "temp_max_c", "humidity_percent",
     "wind_speed_mps", "condition", "extracted_at"
 ]
@@ -53,11 +53,11 @@ def load_to_postgres(transformed_data):
     """
     insert_sql = """
         INSERT INTO weather_data (
-            city, country, temperature_c, feels_like_c,
+            city, province, country, temperature_c, feels_like_c,
             temp_min_c, temp_max_c, humidity_percent,
             wind_speed_mps, condition, extracted_at
         ) VALUES (
-            %(city)s, %(country)s, %(temperature_c)s, %(feels_like_c)s,
+            %(city)s, %(province)s, %(country)s, %(temperature_c)s, %(feels_like_c)s,
             %(temp_min_c)s, %(temp_max_c)s, %(humidity_percent)s,
             %(wind_speed_mps)s, %(condition)s, %(extracted_at)s
         );
@@ -104,7 +104,7 @@ def preview_postgres():
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT city, country, temperature_c, feels_like_c,
+            SELECT city, province, country, temperature_c, feels_like_c,
                    temp_max_c, temp_min_c, humidity_percent,
                    wind_speed_mps, condition, extracted_at
             FROM weather_data
@@ -115,13 +115,13 @@ def preview_postgres():
         rows = cursor.fetchall()
 
         for row in rows:
-            print(f"  City:        {row[0]}, {row[1]}")
-            print(f"  Temperature: {row[2]}°C  (Feels like {row[3]}°C)")
-            print(f"  High/Low:    {row[4]}°C / {row[5]}°C")
-            print(f"  Humidity:    {row[6]}%")
-            print(f"  Wind Speed:  {row[7]} m/s")
-            print(f"  Condition:   {row[8]}")
-            print(f"  Extracted:   {row[9]}")
+            print(f"  City:        {row[0]}, {row[1]}, {row[2]}")
+            print(f"  Temperature: {row[3]}°C  (Feels like {row[4]}°C)")
+            print(f"  High/Low:    {row[5]}°C / {row[6]}°C")
+            print(f"  Humidity:    {row[7]}%")
+            print(f"  Wind Speed:  {row[8]} m/s")
+            print(f"  Condition:   {row[9]}")
+            print(f"  Extracted:   {row[10]}")
             print("-" * 80)
 
         # Get total record count
@@ -146,7 +146,7 @@ def preview_csv():
         rows = list(reader)
 
         for row in rows[-5:]:
-            print(f"  City:        {row['city']}, {row['country']}")
+            print(f"  City:        {row['city']}, {row.get('province', '')}, {row['country']}")
             print(f"  Temperature: {row['temperature_c']}°C  (Feels like {row['feels_like_c']}°C)")
             print(f"  High/Low:    {row['temp_max_c']}°C / {row['temp_min_c']}°C")
             print(f"  Humidity:    {row['humidity_percent']}%")

@@ -6,10 +6,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import unittest
 from transform import transform_city_weather, transform_all
 from validate import validate_city, validate_all
-def make_raw_city(name="Johannesburg", temp=18.5, humidity=65, wind=3.5):
+def make_raw_city(name="Johannesburg", province="Gauteng", temp=18.5, humidity=65, wind=3.5):
     """Helper that builds a fake raw API response."""
     return {
         "name": name,
+        "province": province,
         "sys": {"country": "ZA"},
         "main": {
             "temp": temp,
@@ -24,12 +25,13 @@ def make_raw_city(name="Johannesburg", temp=18.5, humidity=65, wind=3.5):
 
 
 def make_transformed_city(
-    city="Johannesburg", temp=18.5, humidity=65,
+    city="Johannesburg", province="Gauteng", temp=18.5, humidity=65,
     wind=3.5, temp_min=15.0, temp_max=21.0
 ):
     """Helper that builds a fake already-transformed city dict."""
     return {
         "city": city,
+        "province": province,
         "country": "ZA",
         "temperature_c": temp,
         "feels_like_c": temp - 1.5,
@@ -61,7 +63,7 @@ class TestTransform(unittest.TestCase):
         raw = make_raw_city()
         result = transform_city_weather(raw)
         expected_fields = [
-            "city", "country", "temperature_c", "feels_like_c",
+            "city", "province", "country", "temperature_c", "feels_like_c",
             "temp_min_c", "temp_max_c", "humidity_percent",
             "wind_speed_mps", "condition", "extracted_at"
         ]

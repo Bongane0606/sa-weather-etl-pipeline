@@ -21,7 +21,7 @@ def validate_city(city_data):
     passed = True
 
     required_fields = [
-        "city", "country", "temperature_c", "feels_like_c",
+        "city", "province", "country", "temperature_c", "feels_like_c",
         "temp_min_c", "temp_max_c", "humidity_percent",
         "wind_speed_mps", "condition", "extracted_at"
     ]

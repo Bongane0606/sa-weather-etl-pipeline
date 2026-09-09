@@ -35,6 +35,7 @@ def create_table():
         CREATE TABLE IF NOT EXISTS weather_data (
             id                SERIAL PRIMARY KEY,
             city              VARCHAR(100) NOT NULL,
+            province          VARCHAR(100),
             country           VARCHAR(10) NOT NULL,
             temperature_c     NUMERIC(5,2),
             feels_like_c      NUMERIC(5,2),
@@ -47,6 +48,14 @@ def create_table():
         );
     """
 
+    # Covers tables that already existed before "province" was added --
+    # CREATE TABLE IF NOT EXISTS alone won't add a column to a table
+    # that's already there.
+    add_province_column_sql = """
+        ALTER TABLE weather_data
+        ADD COLUMN IF NOT EXISTS province VARCHAR(100);
+    """
+
     conn = get_connection()
     if conn is None:
         logger.error("Cannot create table — no database connection")
@@ -55,6 +64,7 @@ def create_table():
     try:
         cursor = conn.cursor()
         cursor.execute(create_table_sql)
+        cursor.execute(add_province_column_sql)
         conn.commit()
         logger.info("Table 'weather_data' is ready")
         cursor.close()
