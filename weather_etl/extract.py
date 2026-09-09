@@ -1,11 +1,18 @@
+import os
 import requests
+from dotenv import load_dotenv
 from logger import get_logger
 
 logger = get_logger("extract")
 
-API_KEY = "69fbc8866168904d49f0ab87bb00b6a6"  
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
 CITIES = ["Johannesburg", "Cape Town", "Durban", "Pretoria", "Springs"]
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+
+if not API_KEY:
+    logger.error("API_KEY is not set. Add it to your .env file.")
 
 
 def extract_weather(city):

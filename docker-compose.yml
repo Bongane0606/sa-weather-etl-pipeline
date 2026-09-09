@@ -5,13 +5,37 @@ services:
     image: postgres:15
     container_name: weather_postgres
     environment:
-      POSTGRES_DB: weather_db
-      POSTGRES_USER: weather_user
-      POSTGRES_PASSWORD: weather_pass
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - weather_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: weather_pipeline
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # DB_HOST is overridden to the service name so the app can reach
+      # postgres over the docker network -- localhost won't work in a container
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      API_KEY: ${API_KEY}
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
 
 volumes:
   weather_data:
