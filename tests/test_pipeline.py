@@ -43,7 +43,6 @@ def make_transformed_city(
         "extracted_at": "2026-08-03 09:00:00"
     }
 
-
 class TestTransform(unittest.TestCase):
 
     def test_transform_returns_correct_city_name(self):
