@@ -358,7 +358,7 @@ It started as a simple 4-city script and grew into a small but complete pipeline
 * [x] Unit tests
 * [x] Support all South African provinces
 * [ ] Dashboard using Power BI
-* [ ] Interactive visualisations
+* [x] Interactive visualisations — HTML dashboard reading directly from `output/weather_data.csv`
 
 ---
 
