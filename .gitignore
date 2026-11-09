@@ -6,3 +6,19 @@ logs/
 output/
 weather_etl/logs/
 weather_etl/output/
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+venv/
+**/venv/
+**/__pycache__/
+*.pyc
+
+# Generated reports
+.coverage
+**/.coverage
+htmlcov/
+**/htmlcov/
+.pytest_cache/
+**/.pytest_cache/
