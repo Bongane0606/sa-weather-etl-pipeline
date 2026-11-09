@@ -136,7 +136,7 @@ The application requests weather information from an external weather API.
 
 The extraction component is responsible for retrieving data before any processing happens.
 
-**File:** `weather_etl/extract.py`
+**File:** `backend/etl/extract.py`
 
 The API may require an API key, which should be stored in an environment file rather than published on GitHub.
 
@@ -149,7 +149,7 @@ Raw information is converted into a consistent format.
 
 Transformation makes it easier to compare weather readings from different cities.
 
-**File:** `weather_etl/transform.py`
+**File:** `backend/etl/transform.py`
 
 </details>
 
@@ -160,7 +160,7 @@ Validation checks whether weather information meets expected requirements.
 
 Invalid information can be identified before being saved.
 
-**File:** `weather_etl/validate.py`
+**File:** `backend/etl/validate.py`
 
 </details>
 
@@ -172,7 +172,7 @@ The application supports storing weather data in:
 - PostgreSQL, a relational database.
 - CSV, a spreadsheet-compatible file format.
 
-**Files:** `weather_etl/load.py` and `weather_etl/db.py`
+**Files:** `backend/etl/load.py` and `backend/etl/db.py`
 
 </details>
 
@@ -183,9 +183,9 @@ The Flask backend reads stored weather observations and provides them to the fro
 
 The frontend presents the information using cards, charts, and tables.
 
-**Backend:** `dashboard_api/app.py`
+**Backend:** `backend/api/app.py`
 
-**Frontend:** `dashboard_api/static/index.html`
+**Frontend:** `frontend/index.html`, `frontend/styles.css` and `frontend/app.js`
 
 </details>
 
@@ -196,7 +196,7 @@ Apache Airflow is used to schedule and manage the weather pipeline.
 
 Instead of manually running the ETL process every time, a configured Airflow DAG can execute it on a schedule.
 
-**DAG:** `dags/weather_pipeline_dag.py`
+**DAG:** `backend/dags/weather_pipeline_dag.py`
 
 </details>
 
@@ -238,17 +238,7 @@ cd sa-weather-etl-pipeline
 
 ### 2. Find the Docker Compose configuration
 
-```bash
-find . -name docker-compose.yml
-```
-
-If the full-stack application is inside a nested folder, enter that folder:
-
-```bash
-cd sa-weather-etl-pipeline
-```
-
-Only run this second `cd` if the nested directory exists.
+`docker-compose.yml` is in the project root, next to `README.md`. Run all Docker commands from there.
 
 ### 3. Configure your environment
 
@@ -607,7 +597,7 @@ These results were measured during development. Run the tests yourself to verify
 
 ### Install test dependencies
 
-From the directory containing `weather_etl/` and `tests/`:
+From the directory containing `backend/etl/` and `tests/`:
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -627,15 +617,14 @@ python3 -m pip install pytest pytest-cov
 ### Run all tests
 
 ```bash
-python3 -m pytest tests/ -v
+python3 -m pytest -v
 ```
 
 ### Run tests with coverage
 
 ```bash
-python3 -m pytest tests/ -v \
-  --cov=weather_etl \
-  --cov=dashboard_api \
+python3 -m pytest -v \
+  --cov=backend \
   --cov-report=term-missing \
   --cov-report=html
 ```
@@ -668,44 +657,40 @@ The full-stack application contains components similar to:
 ```text
 sa-weather-etl-pipeline/
 │
-├── weather_etl/
-│   ├── extract.py
-│   ├── transform.py
-│   ├── validate.py
-│   ├── load.py
-│   ├── db.py
-│   ├── logger.py
-│   └── pipeline.py
+├── backend/
+│   ├── etl/                 # Extract, transform, validate, load
+│   │   ├── extract.py
+│   │   ├── transform.py
+│   │   ├── validate.py
+│   │   ├── load.py
+│   │   ├── db.py
+│   │   ├── logger.py
+│   │   └── pipeline.py
+│   ├── api/                 # Flask API that reads PostgreSQL
+│   │   ├── app.py
+│   │   └── requirements.txt
+│   ├── dags/                # Airflow schedule
+│   │   └── weather_pipeline_dag.py
+│   └── tests/
 │
-├── dashboard_api/
-│   ├── app.py
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── static/
-│       └── index.html
+├── frontend/                # Dashboard served by the Flask API
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
 │
-├── dags/
-│   └── weather_pipeline_dag.py
+├── docker/                  # Image definitions
+│   ├── etl.Dockerfile
+│   ├── api.Dockerfile
+│   └── airflow.Dockerfile
 │
-├── docker/
-│   └── airflow/
-│       └── Dockerfile
-│
-├── tests/
-│   ├── test_pipeline.py
-│   ├── test_dashboard_api.py
-│   ├── test_db.py
-│   ├── test_extract.py
-│   ├── test_load.py
-│   └── test_pipeline_flow.py
-│
+├── docs/                    # PowerBI guide, dashboard setup, legacy dashboard
 ├── docker-compose.yml
-├── Dockerfile
+├── pytest.ini
 ├── requirements.txt
+├── .env.example
 └── README.md
 ```
 
-> Note: The current GitHub repository may contain an additional nested `sa-weather-etl-pipeline/` directory. Always run Docker and testing commands from the directory containing the relevant configuration and source files.
 
 ---
 

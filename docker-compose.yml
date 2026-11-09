@@ -2,7 +2,7 @@ x-airflow-common:
   &airflow-common
   build:
     context: .
-    dockerfile: docker/airflow/Dockerfile
+    dockerfile: docker/airflow.Dockerfile
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -18,8 +18,8 @@ x-airflow-common:
     DB_PASSWORD: ${DB_PASSWORD}
     API_KEY: ${API_KEY}
   volumes:
-    - ./dags:/opt/airflow/dags
-    - ./weather_etl:/opt/airflow/weather_etl
+    - ./backend/dags:/opt/airflow/dags
+    - ./backend/etl:/opt/airflow/weather_etl
     - airflow_logs:/opt/airflow/logs
   user: "${AIRFLOW_UID:-50000}:0"
 
@@ -42,7 +42,9 @@ services:
       retries: 5
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/etl.Dockerfile
     container_name: weather_pipeline
     depends_on:
       postgres:
@@ -107,6 +109,27 @@ services:
       airflow-init:
         condition: service_completed_successfully
     command: scheduler
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: weather_dashboard
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5050:5000"
+    # Frontend is mounted so edits show up on refresh, no rebuild needed.
+    volumes:
+      - ./frontend:/app/static:ro
+    restart: unless-stopped
 
 volumes:
   weather_data:

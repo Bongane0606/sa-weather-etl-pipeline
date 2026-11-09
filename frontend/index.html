@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SA Weather Observations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">SA Weather<span>Observations</span></div>
+    <nav aria-label="Sections"><a href="#latest">Latest readings</a><a href="#history">History</a><a href="#log">Observation log</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <div>
+      <h1>Weather across South Africa</h1>
+      <p>Readings collected by the ETL pipeline from a weather API, validated, and stored in PostgreSQL.</p>
+    </div>
+    <div class="controls">
+      <select id="city" aria-label="Filter by city"><option value="">All cities</option></select>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+    </div>
+  </div>
+
+  <div id="message" role="alert"></div>
+
+  <div class="grid" id="latest">
+    <section aria-labelledby="latest-h">
+      <div class="head">
+        <h2 id="latest-h">Latest reading per city</h2>
+        <span class="note">Bars share one scale, 0 to 40°C. Select a city to filter the page.</span>
+      </div>
+      <ul class="readings" id="readings"><li class="empty">Loading readings…</li></ul>
+    </section>
+
+    <section aria-labelledby="fig-h">
+      <div class="head"><h2 id="fig-h">Summary</h2><span class="note" id="scope">All cities</span></div>
+      <dl class="figs">
+        <div class="fig"><dt>Observations recorded</dt><dd id="records">—</dd></div>
+        <div class="fig"><dt>Cities monitored</dt><dd id="cities">—</dd></div>
+        <div class="fig"><dt>Average temperature</dt><dd id="temp">—</dd></div>
+        <div class="fig"><dt>Average humidity</dt><dd id="humidity">—</dd></div>
+        <div class="fig"><dt>Last observation</dt><dd class="small" id="updated">—</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <section class="stack" id="history" aria-labelledby="hist-h">
+    <div class="head"><h2 id="hist-h">Temperature history</h2><span class="note">One line per city, °C</span></div>
+    <div class="chartbox"><canvas id="chart" role="img" aria-label="Line chart of recorded temperature over time, one line per city"></canvas></div>
+  </section>
+
+  <section class="stack" id="log" aria-labelledby="log-h">
+    <div class="head"><h2 id="log-h">Observation log</h2><span class="note" id="logNote"></span></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>City</th><th>Condition</th><th class="num">Temperature</th><th class="num">Feels like</th><th class="num">Humidity</th><th class="num">Wind</th><th>Recorded</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="more" id="more" hidden><span class="note" id="moreNote"></span><button class="btn ghost" id="toggle" type="button"></button></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built for the Data Engineering elective at WeThinkCode_.</span>
+    <span>Python ETL, Apache Airflow, PostgreSQL, Flask.</span>
+  </div>
+</footer>
+
+<script src="/static/app.js" defer></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # SA Weather Analytics Dashboard
 
-This adds a **read-only Flask API** and responsive HTML/CSS/JavaScript dashboard to the original project. Your ETL, Airflow, PostgreSQL database and original `dashboard.html` remain intact.
+This adds a **read-only Flask API** and responsive HTML/CSS/JavaScript dashboard to the original project. Your ETL, Airflow, PostgreSQL database and the original dashboard (docs/legacy/dashboard.html) remain intact.
 
 ## Start with Docker (Pop!_OS / Linux)
 
@@ -18,7 +18,7 @@ docker compose logs -f dashboard
 5. If the database is empty, run your existing pipeline (requires a valid OpenWeatherMap API key):
 
 ```bash
-docker compose run --rm app python weather_etl/pipeline.py
+docker compose run --rm app
 ```
 
 Check your existing Dockerfile/README for the exact pipeline command if its working directory differs. The dashboard does **not** import CSV data automatically; it reads PostgreSQL only.
@@ -36,9 +36,9 @@ Airflow is available at **http://localhost:8080** once initialized. The dashboar
 ```bash
 python3 -m venv .dashboard-venv
 source .dashboard-venv/bin/activate
-pip install -r dashboard_api/requirements.txt
+pip install -r backend/api/requirements.txt
 # Export DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD or use an env loader.
-cd dashboard_api
+cd backend/api
 python app.py
 ```
 

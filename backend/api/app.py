@@ -1,12 +1,15 @@
 """Read-only API for the existing weather_data PostgreSQL table."""
 import os
+from pathlib import Path
 from datetime import datetime, date
 from decimal import Decimal
 from flask import Flask, jsonify, request, send_from_directory
 from psycopg2 import connect, OperationalError, errors
 from psycopg2.extras import RealDictCursor
 
-app = Flask(__name__, static_folder='static')
+_here = Path(__file__).resolve().parent
+FRONTEND = _here / 'static' if (_here / 'static').exists() else _here.parents[1] / 'frontend'
+app = Flask(__name__, static_folder=str(FRONTEND), static_url_path='/static')
 
 def connection():
     return connect(host=os.getenv('DB_HOST','localhost'), port=os.getenv('DB_PORT','5432'),
