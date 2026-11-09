@@ -1,573 +1,358 @@
-# 🌦️ SA Weather ETL Pipeline
+<div align="center">🌦️ SA Weather Observatory
+From weather data to a dashboard anyone can understand
+   
+A South African weather data engineering project with a beginner-friendly dashboard.
 
-<p align="center">
+🚀 Quick start · 🧭 Choose your journey · 🧩 How it works · 🧪 Tests · 🆘 Help
+</div>[!NOTE]
+This dashboard shows recorded historical observations, not a live forecast. It works on the computer running Docker (localhost).
 
-![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)
-![ETL](https://img.shields.io/badge/Data-Engineering-green?style=for-the-badge)
-![Airflow](https://img.shields.io/badge/Orchestration-Airflow-017CEE?style=for-the-badge&logo=apacheairflow)
-![Docker](https://img.shields.io/badge/Containerized-Docker-2496ED?style=for-the-badge&logo=docker)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql)
-![Tests](https://img.shields.io/badge/Tests-14%20passing-success?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-red?style=for-the-badge)
+🚀 Quick start — three commands
+First, open a terminal inside the folder containing docker-compose.yml. You need Docker installed and a configured .env file (see the setup guide below).
+docker compose config --services
+docker compose up -d --build postgres dashboard
+curl http://localhost:5050/api/health
+Then open 🌐 Weather dashboard — http://localhost:5050 on that computer.
+[!TIP]
+A new database can be empty. To collect readings, configure an OpenWeatherMap API key and run docker compose run --rm app.
 
-</p>
+🧭 Choose your journey
+I want to…	Start here
+👀 Just see the weather dashboard	Start dashboard
+🌦️ Collect new weather readings	Run ETL
+⏰ Schedule automatic collection	Airflow guide
+🧪 Run the automated tests	Testing guide
+🔧 Fix an error	Troubleshooting
 
-<p align="center">
-A Python ETL pipeline that collects <strong>live weather data</strong> for one city in each of South Africa's nine provinces, checks its quality, and stores it in both a <strong>CSV file</strong> and a <strong>PostgreSQL</strong> database. <strong>Apache Airflow</strong> runs it automatically every 6 hours, and <strong>Docker Compose</strong> packages the whole thing so it runs the same on any machine.
-</p>
 
----
-
-## 📖 Table of Contents
-
-1. [What this project does](#-what-this-project-does)
-2. [How it works, stage by stage](#-how-it-works-stage-by-stage)
-3. [Project structure](#-project-structure)
-4. [Tech stack and why each piece is here](#️-tech-stack-and-why-each-piece-is-here)
-5. [Before you start (prerequisites)](#-before-you-start-prerequisites)
-6. [Configuration: the `.env` file](#️-configuration-the-env-file)
-7. [Run it with Docker (recommended)](#-run-it-with-docker-recommended)
-8. [Run it locally without Docker](#-run-it-locally-without-docker)
-9. [Run the tests](#-run-the-tests)
-10. [Where your output ends up](#-where-your-output-ends-up)
-11. [Command cheat sheet](#-command-cheat-sheet)
-12. [Data and database reference](#-data-and-database-reference)
-13. [Dashboards (HTML and Power BI)](#-dashboards-html-and-power-bi)
-14. [Design notes and known limitations](#-design-notes-and-known-limitations)
-15. [Troubleshooting](#-troubleshooting)
-16. [Roadmap](#-roadmap)
-17. [Contributing, author, license](#-contributing-author-license)
-
----
-
-## 🚀 What this project does
-
-Weather data is a good way to practise real data engineering, because it changes constantly and the source (an API) can fail or return odd values. This pipeline does the same job a production data team would automate:
-
-1. **Extract**: calls the [OpenWeatherMap](https://openweathermap.org/api) API for nine cities.
-2. **Transform**: throws away everything it does not need and renames the rest into a clean, flat record.
-3. **Validate**: rejects any record with missing fields or physically impossible values (humidity of 150%, for example) so bad data never reaches storage.
-4. **Load**: appends the good records to a CSV file **and** inserts them into a PostgreSQL table.
-5. **Schedule**: Airflow repeats all of this every 6 hours, so over time you build up a history of weather readings you can chart.
-
-**Cities covered (one per province):**
-
-| Province | City queried |
-|---|---|
-| Gauteng | Johannesburg |
-| Western Cape | Cape Town |
-| KwaZulu-Natal | Durban |
-| Eastern Cape | Port Elizabeth (now Gqeberha) |
-| Free State | Bloemfontein |
-| Limpopo | Polokwane |
-| Mpumalanga | Nelspruit (now Mbombela) |
-| North West | Mahikeng |
-| Northern Cape | Kimberley |
-
-> Port Elizabeth and Nelspruit use their older names on purpose: the OpenWeatherMap API recognises those names more reliably than the new official ones.
-
----
-
-## 🔄 How it works, stage by stage
-
+🧩 How it works
 ```mermaid
-flowchart LR
-    A[⏰ Airflow<br/>every 6 hours] --> B[pipeline.py]
-    B --> C[extract.py<br/>OpenWeatherMap API]
-    C --> D[transform.py<br/>clean + rename]
-    D --> E[validate.py<br/>quality checks]
-    E -->|passed| F[load.py]
-    E -->|failed| X[⚠️ logged and dropped]
-    F --> G[(output/weather_data.csv)]
-    F --> H[(PostgreSQL<br/>weather_data table)]
+flowchart TD
+    A[OpenWeatherMap API] --> B[Extract weather readings]
+    B --> C[Transform into consistent fields]
+    C --> D{Validate readings}
+    D -->|Valid| E[CSV file]
+    D -->|Valid| F[(PostgreSQL database)]
+    D -->|Invalid| X[Skip invalid record]
+    F --> G[Flask API]
+    G --> H[Weather dashboard]
+    I[Apache Airflow scheduler] -.-> B
 ```
+<details>
+<summary><strong>📖 What do ETL, API, database, and Docker mean?</strong></summary>- ETL: Extract (get data), Transform (organize it), Load (save it). This project also validates data before saving.
+- API: A way for programs to ask each other for information.
+- PostgreSQL: A database that stores weather records.
+- Docker: A way to run the different services together without installing every component manually.
+- Airflow: A scheduler that can run the ETL workflow automatically.
+</details>📚 Interactive step-by-step guide
+Click any heading below to expand the instructions. Start with setup if this is your first time.
 
-`pipeline.py` is the conductor: it calls each stage in order, and stops early (with an error in the log) if nothing was extracted or nothing passed validation.
+<a id="1-what-did-i-build"></a>
+<details id="step-1">
+<summary><strong>1. What did I build?</strong></summary>
+Imagine checking the weather in several South African cities every few hours, writing the results in a notebook, and drawing graphs to compare them. This project does that automatically.
 
-### 1. Extract (`extract.py`)
-- Loops over the nine cities and makes one API request each: `GET /data/2.5/weather?q=<city>,ZA&units=metric`.
-- `units=metric` is why the data comes back in **°C** and **metres per second**, and why the column names end in `_c` and `_mps`.
-- Each request has a 10-second timeout. If one city fails (timeout, no internet, non-200 response) it is logged and skipped, and the other cities carry on. A run with 8 of 9 cities is still useful.
-- The province is attached to each response here, because the API does not know which province a city is in.
+It retrieves weather readings from OpenWeatherMap, cleans and checks them, saves them to PostgreSQL (a database) and CSV (a spreadsheet-friendly file), and displays the stored readings on a website. Apache Airflow can schedule the collection every six hours.
 
-### 2. Transform (`transform.py`)
-The API returns a large nested JSON document per city. This stage turns it into one flat record:
+In plain English: It is a system for collecting, storing, checking, and exploring South African weather history—not a weather forecasting service.
+What the dashboard shows
+- Total recorded weather observations and monitored cities.
+- Average temperature and humidity across stored observations.
+- Temperature history and latest readings for cities.
+- City filtering and historical weather records.
+Important: The dashboard displays stored historical readings. It is not necessarily showing the current weather. A new reading appears only after the pipeline runs and successfully saves it. The chart uses Chart.js from the internet, so the chart may require an internet connection.
+</details>
+<a id="2-what-software-is-used-and-why"></a>
+<details id="step-2">
+<summary><strong>2. What software is used, and why?</strong></summary>Technology	Simple explanation
+Python	The programming language that collects and processes data
+OpenWeatherMap API	The service that supplies weather readings; requires an API key
+PostgreSQL	A digital filing cabinet that stores weather records
+CSV	A file that opens in spreadsheet programs
+Flask	Connects the database to the dashboard through an API
+HTML, CSS, JavaScript, Chart.js	Creates the web page and charts
+Apache Airflow	An automatic scheduler that runs the pipeline every six hours
+Docker Compose	Starts the different parts of the project together
+pytest	Checks that the Python code behaves as expected
 
-| Output field | Where it comes from in the API response |
-|---|---|
-| `city`, `country` | `name`, `sys.country` |
-| `province` | added in the extract step |
-| `temperature_c`, `feels_like_c`, `temp_min_c`, `temp_max_c` | `main.temp`, `main.feels_like`, `main.temp_min`, `main.temp_max` |
-| `humidity_percent` | `main.humidity` |
-| `wind_speed_mps` | `wind.speed` |
-| `condition` | `weather[0].description` |
-| `extracted_at` | the time the pipeline ran (not the time the weather was observed) |
 
-### 3. Validate (`validate.py`)
-Every record must pass all of these checks or it is dropped (and a warning explaining why is written to the log):
+The weather collection configuration originally includes nine South African cities, one per province. The database can contain more city names over time; the dashboard lists the distinct locations actually stored.
+</details>
+<a id="3-what-you-need-before-starting"></a>
+<details id="step-3">
+<summary><strong>3. What you need before starting</strong></summary>
+This guide uses Ubuntu / Pop!_OS Linux commands. You will need:
+1. A computer with an internet connection.
+2. Docker Engine and the Docker Compose plugin, installed and running. Installation instructions: https://docs.docker.com/engine/install/ubuntu/ and https://docs.docker.com/compose/install/linux/ . Pop!_OS users should check Docker's Linux compatibility guidance.
+3. A copy of this project folder, extracted from its ZIP file or cloned from its repository.
+4. A free OpenWeatherMap API key if you want to collect new weather readings: https://openweathermap.org/api . A new key may need time to activate.
+5. Python 3 and pip if you want to run the automated tests locally.
+Open a terminal using Ctrl + Alt + T. A terminal is the window where you type the commands below. Run each command and press Enter.
 
-| Check | Rule |
-|---|---|
-| Required fields | all 11 fields present and non-empty |
-| Temperatures (current, feels-like, min, max) | between -20 °C and 60 °C |
-| Humidity | between 0 and 100 % |
-| Wind speed | between 0 and 113 m/s |
-| Consistency | `temp_min_c` must not be greater than `temp_max_c` |
+Check Docker:
+docker --version
+docker compose version
+docker info
+If docker info reports that it cannot connect to the Docker daemon, try:
+sudo systemctl start docker
+If Docker reports a permission error, use the official Docker post-install instructions to configure access. Do not change permissions on the Docker socket to 777.
+</details>
+<a id="4-open-the-right-project-folder-very-important"></a>
+<details id="step-4">
+<summary><strong>4. Open the right project folder (very important)</strong></summary>
+Your project must contain docker-compose.yml, dashboard_api/, weather_etl/, and tests/ in the same folder.
 
-### 4. Load (`load.py`, `db.py`)
-- `create_table()` makes sure the `weather_data` table exists. It is safe to run on every run, because it uses `CREATE TABLE IF NOT EXISTS`.
-- **CSV:** rows are appended to `weather_data.csv`; the header is written only when the file is first created.
-- **PostgreSQL:** all rows of a run are inserted in a single transaction, so either the whole batch is saved or none of it is.
-- Finally, `preview_postgres()` prints the five most recent rows and the total row count so you can see it worked.
+For the folder layout used during development, run:
+cd ~/Documents/sa-weather-etl-pipeline/sa-weather-etl-pipeline
+pwd
+ls
+If someone else downloaded the project elsewhere, replace the cd path with their project location. pwd shows where you are; ls shows files. If you see no such service: dashboard, you are probably in the wrong folder or using an older docker-compose.yml.
 
-### 5. Orchestrate (`dags/weather_pipeline_dag.py`)
-- DAG id: `sa_weather_etl_pipeline`. Schedule: `0 */6 * * *` (00:00, 06:00, 12:00, 18:00 in the Airflow server's timezone, which is UTC by default).
-- One task runs `cd /opt/airflow/weather_etl && python pipeline.py`, which is exactly the same code the standalone `app` container runs. The DAG has no pipeline logic of its own.
-- If a run fails, Airflow retries once after 5 minutes. `catchup=False` means that if Airflow was switched off for a day, it will not try to run all the missed runs when it comes back.
+Verify the services:
+docker compose config --services
+The updated project includes postgres, dashboard, app, airflow-postgres, airflow-init, airflow-webserver, and airflow-scheduler (the order may differ).
+</details>
+<a id="5-set-up-private-configuration-env"></a>
+<details id="step-5">
+<summary><strong>5. Set up private configuration (`.env`)</strong></summary>
+The project needs a file named .env next to docker-compose.yml. It holds configuration and secrets. Do not upload this file to GitHub or share its contents.
 
-### 6. Log (`logger.py`)
-Every stage writes to the terminal **and** to a daily file, `logs/pipeline_YYYY-MM-DD.log`, in the format `time | level | module | message`. When something goes wrong, this file is the first place to look.
-
----
-
-## 📁 Project structure
-
-```text
-sa-weather-etl-pipeline/
-│
-├── weather_etl/                  # The pipeline itself
-│   ├── pipeline.py               # Entry point: runs extract → transform → validate → load
-│   ├── extract.py                # API calls + the list of cities/provinces
-│   ├── transform.py              # Raw JSON → flat clean records
-│   ├── validate.py               # Data-quality rules
-│   ├── load.py                   # Writes to CSV and PostgreSQL
-│   ├── db.py                     # Database connection + table creation
-│   └── logger.py                 # Console + daily log file
-│
-├── dags/
-│   └── weather_pipeline_dag.py   # Airflow DAG (the 6-hour schedule)
-│
-├── docker/airflow/Dockerfile     # Airflow image + this project's Python packages
-├── Dockerfile                    # Image for the standalone pipeline ("app")
-├── docker-compose.yml            # Defines all 6 services and how they connect
-│
-├── tests/test_pipeline.py        # 14 unit tests (transform + validate)
-├── conftest.py                   # Lets pytest find the modules in weather_etl/
-│
-├── dashboard.html                # Standalone visual dashboard (static snapshot)
-├── PowerBI.md                    # Step-by-step Power BI setup guide
-│
-├── requirements.txt              # Python dependencies for the pipeline
-├── .env                          # Your private settings (never commit this)
-├── output/                       # CSV written by the Docker "app" container
-└── logs/                         # Log files written by the Docker "app" container
-```
-
----
-
-## 🛠️ Tech stack and why each piece is here
-
-| Technology | Role in this project |
-|---|---|
-| **Python 3.10** | Language for all pipeline code |
-| **Requests** | Makes the HTTP calls to the weather API |
-| **psycopg2** | Lets Python talk to PostgreSQL |
-| **python-dotenv** | Reads `API_KEY` and database settings from `.env` so no secrets are hard-coded |
-| **PostgreSQL 15** | Permanent, queryable storage: this is what Power BI or SQL queries read from |
-| **CSV** | Simple flat-file copy of the same data, easy to open in Excel |
-| **Apache Airflow 2.9** | Runs the pipeline on a schedule, retries failures, and gives you a web UI with run history |
-| **Docker + Docker Compose** | Starts the databases, the pipeline and Airflow with one command, with no manual installs |
-| **pytest** | Runs the unit tests |
-| **OpenWeatherMap API** | The data source |
-
----
-
-## ✅ Before you start (prerequisites)
-
-| You need | Why | How to check |
-|---|---|---|
-| **Git** | To download the project | `git --version` |
-| **Docker Desktop** (includes Docker Compose v2) | Runs the whole stack in containers. Needed for the Docker route and handy for the local route (to get a database) | `docker --version` and `docker compose version` |
-| **Python 3.10** | Only for the local (non-Docker) route and for running tests | `python3 --version` |
-| **A free OpenWeatherMap API key** | The API refuses requests without one | Sign up at [openweathermap.org](https://openweathermap.org/api), then copy the key from *My API keys* |
-
-> **Heads-up:** a brand-new API key can take up to a couple of hours to activate. Until then the API answers `401`, which looks like a bug in the pipeline but is not.
-
----
-
-## ⚙️ Configuration: the `.env` file
-
-Docker Compose and the Python code both read their settings from a file named exactly `.env` in the project root.
-
-**Create it:**
-
-```bash
-# macOS / Linux
-touch .env
-# Windows PowerShell
-New-Item .env -ItemType File
-```
-
-**Then paste this in and edit the values:**
-
-```env
-# --- PostgreSQL (the weather database) ---
+If you already have a working .env, keep it; do not overwrite it. Otherwise create one:
+nano .env
+Paste the following example and replace the password and API key with your own values:
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=weather_db
 DB_USER=weather_user
-DB_PASSWORD=choose_a_password
+DB_PASSWORD=replace_with_your_private_password
+API_KEY=replace_with_your_openweathermap_api_key
+AIRFLOW_UID=50000
+On Linux, AIRFLOW_UID can be set to the number printed by id -u. To save in nano: Ctrl + O, Enter, then Ctrl + X.
 
-# --- OpenWeatherMap ---
-API_KEY=paste_your_openweathermap_key_here
+Explanation: DB_NAME is the database name, DB_USER is its account, DB_PASSWORD is its password, and API_KEY permits weather requests. DB_PORT is the computer's PostgreSQL port. Docker automatically uses the internal database host postgres for the application containers, even though .env uses localhost for local tools.
 
-# --- Airflow ---
-AIRFLOW_UID=50000        # On Linux use your own user id: run `id -u` and paste the number
-```
+Check configuration without displaying your secrets:
+docker compose config --services
+If Docker warns that variables are not set, check that .env is in the correct folder. Do not paste docker compose config output publicly because it can contain secrets.
 
-| Variable | Used by | What it does |
-|---|---|---|
-| `DB_HOST` | local runs only | Where Postgres lives. Use `localhost` when running outside Docker. **Docker Compose overrides this to `postgres` for the containers**, so you do not need to change it between routes |
-| `DB_PORT` | Compose + local runs | The port Postgres is published on on your machine. Change it (e.g. `5433`) if something else already uses 5432 |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Compose + pipeline | Compose creates the database with these on first start; the pipeline logs in with them |
-| `API_KEY` | pipeline | Your OpenWeatherMap key |
-| `AIRFLOW_UID` | Compose | The user id Airflow runs as inside its container. It should match your own on Linux so Airflow can write files in your project folder |
+Note: If PostgreSQL was already initialized with a different username or password, editing .env alone does not update the existing database account. Keep the working credentials or explicitly migrate the database credentials; do not delete volumes to solve a password mismatch.
+</details>
+<a id="6-start-the-weather-dashboard-easiest-first-run"></a>
+<details id="step-6">
+<summary><strong>6. Start the weather dashboard (easiest first run)</strong></summary>
+From the project folder:
+docker compose up -d --build postgres dashboard
+This downloads/builds what is needed and starts the weather database and dashboard. The first run can take a few minutes. -d keeps them running in the background; --build creates the latest application image.
 
-> 🔒 **Never commit `.env` or share your API key.** `.gitignore` already excludes `.env`. If a key is ever pasted into a chat, screenshot or public repo, regenerate it in your OpenWeatherMap account.
+Check status:
+docker compose ps
+You want the postgres service to be healthy and the dashboard service to be running.
 
----
+Open your web browser and enter:
 
-## 🐳 Run it with Docker (recommended)
+http://localhost:5050
 
-This starts everything: the weather database, the pipeline, and the full Airflow stack.
+localhost means this computer. This link works on the computer running Docker; it is not a public website.
 
-### Step 1: Download the project
-```bash
-git clone https://github.com/Bongane0606/sa-weather-etl-pipeline.git
-cd sa-weather-etl-pipeline
-```
-**Why:** `clone` copies the code to your machine; `cd` moves into it, because every later command must be run from the project root (where `docker-compose.yml` and `.env` live).
+Check that the API can reach the database:
+curl http://localhost:5050/api/health
+A healthy response looks like:
+{"database":"connected","status":"ok"}
+If the dashboard has no readings yet, that is normal for a new database. Continue to the next step to collect data.
+</details>
+<a id="7-collect-weather-readings-now-run-etl-manually"></a>
+<details id="step-7">
+<summary><strong>7. Collect weather readings now (run ETL manually)</strong></summary>
+Make sure your OpenWeatherMap key in .env is valid. Then run:
+docker compose run --rm app
+This starts the ETL job once, collecting and processing weather readings, then exits. The --rm option removes its temporary container after completion.
 
-### Step 2: Create your `.env`
-Follow [Configuration](#️-configuration-the-env-file) above.
-**Why:** `docker-compose.yml` is full of placeholders like `${DB_USER}` and `${API_KEY}`. Compose fills them in from `.env`. Without it, the containers start with blank passwords and no API key.
+To see whether it worked, examine the terminal output. You can also run:
+docker compose logs --tail=100 app
+Note: docker compose run --rm app creates a temporary container; its logs may not appear under the long-lived app service afterward. The terminal output from the run is the most reliable place to check that particular execution.
 
-### Step 3: Build and start everything
-```bash
-docker compose up -d --build
-```
-**Why each part:**
-- `docker compose up` creates and starts all six services defined in `docker-compose.yml`.
-- `-d` ("detached") runs them in the background so your terminal stays free.
-- `--build` rebuilds the images from the Dockerfiles. It is needed the first time, and any time you change `requirements.txt` or the pipeline code that the `app` image copies in.
+Refresh http://localhost:5050 in your browser. The dashboard reads the PostgreSQL records. The CSV file is written to output/weather_data.csv in the project folder.
 
-The first run takes a few minutes while images download. Here is what starts:
+Each successful run adds observations. It does not replace earlier observations. If the API fails or no readings pass validation, no new records may be added.
+</details>
+<a id="8-check-the-saved-data-no-sql-knowledge-required"></a>
+<details id="step-8">
+<summary><strong>8. Check the saved data (no SQL knowledge required)</strong></summary>
+To count stored weather records, copy and paste:
+docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT COUNT(*) FROM weather_data;"'
+To see the nine most recently saved records:
+docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT city, temperature_c, humidity_percent, extracted_at FROM weather_data ORDER BY extracted_at DESC LIMIT 9;"'
+What is SQL? It is a language for asking questions of a database. SELECT reads records; these commands do not delete or change anything.
 
-| Service | Container name | What it is | Normal state |
-|---|---|---|---|
-| `postgres` | `weather_postgres` | The database that stores your weather data | Running, `healthy` |
-| `app` | `weather_pipeline` | Runs the pipeline **once** straight away, then stops | `Exited (0)` ✅ |
-| `airflow-postgres` | `airflow_postgres` | A separate database for Airflow's own bookkeeping | Running, `healthy` |
-| `airflow-init` | `airflow_init` | One-off setup: prepares Airflow's database and creates the admin user | `Exited (0)` ✅ |
-| `airflow-webserver` | `airflow_webserver` | The Airflow web UI | Running |
-| `airflow-scheduler` | `airflow_scheduler` | Triggers the DAG on schedule | Running |
+If you get role "root" does not exist, it usually means you used an empty $DB_USER in the host terminal. Use the commands above exactly: they read the correct database username inside the container.
 
-> The weather data and Airflow's metadata live in **two separate databases on purpose**, so Airflow's housekeeping never mixes with your data.
+If you get relation "weather_data" does not exist, run the ETL job once (Step 7) to create the table, then retry.
+</details>
+<a id="9-run-the-pipeline-automatically-with-airflow-optional"></a>
+<details id="step-9">
+<summary><strong>9. Run the pipeline automatically with Airflow (optional)</strong></summary>
+Airflow is like an alarm clock for the ETL job. The project DAG is called sa_weather_etl_pipeline and is scheduled every six hours (00:00, 06:00, 12:00, 18:00 in Airflow's timezone, normally UTC).
 
-### Step 4: Check that everything is healthy
-```bash
-docker compose ps -a
-```
-**Why:** shows every service and its state. `-a` includes containers that have finished, such as `app` and `airflow-init`, which is what you expect. `Exited (0)` means "finished with no crash", **not** necessarily "loaded data", so do Step 5 as well.
+Start the Airflow services:
+docker compose up -d --build airflow-init airflow-webserver airflow-scheduler
+The initial build may take several minutes. Then visit:
 
-### Step 5: Confirm the pipeline actually loaded data
-```bash
-docker compose logs app
-```
-**Why:** `app` ran the pipeline once at start-up and exited, so its log is the record of that run. Look for `Extraction complete — 9/9 cities successful`, `Validation complete — 9 passed, 0 failed` and `Successfully inserted 9 records into PostgreSQL`. If you see errors instead, go to [Troubleshooting](#-troubleshooting).
+http://localhost:8080
 
-Then check the database directly:
-```bash
-docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT city, province, temperature_c, extracted_at FROM weather_data ORDER BY extracted_at DESC LIMIT 9;"'
-```
-**Why:** `exec` runs a command inside the running Postgres container. `psql` is Postgres's command-line client, and the `$POSTGRES_...` variables are already set inside that container, so you do not have to retype your credentials. Seeing nine fresh rows proves the whole chain works.
+The development configuration creates the account:
+Username: admin
+Password: admin
+These credentials are for local demonstration only. Change them before making Airflow accessible to other people or a network.
 
-### Step 6: Open Airflow and turn the schedule on
-Open **http://localhost:8080** and log in with username `admin`, password `admin`.
+In Airflow, find sa_weather_etl_pipeline, enable/unpause it, and click Trigger DAG to run it immediately. A DAG is simply Airflow's name for a scheduled workflow.
 
-1. Find the DAG **`sa_weather_etl_pipeline`**.
-2. Flip its toggle to **on** (Airflow creates new DAGs paused, so nothing runs until you do this).
-3. To test it immediately without waiting for the next 6-hour slot, click the ▶ **Trigger DAG** button.
-
-Prefer the terminal? These do the same thing:
-```bash
+Alternatively, use the terminal:
 docker compose exec airflow-scheduler airflow dags unpause sa_weather_etl_pipeline
 docker compose exec airflow-scheduler airflow dags trigger sa_weather_etl_pipeline
-```
-**Why:** the Airflow command-line tool lives inside the Airflow containers, so you reach it through `docker compose exec`.
-
-> `admin` / `admin` is fine on your own laptop. Change it before exposing Airflow to a network.
-
-### Run the pipeline again whenever you want
-```bash
-docker compose run --rm app
-```
-**Why:** the `app` container is a "run once and exit" job. `run` starts a fresh copy, and `--rm` deletes that copy afterwards so stopped containers do not pile up. It also starts the database first if it is not already running.
-
-### Watch what Airflow is doing
-```bash
-docker compose logs -f airflow-scheduler
-```
-**Why:** the scheduler is the part that decides when to run the DAG. `-f` ("follow") streams new log lines live; press `Ctrl+C` to stop watching (this does not stop the container).
-
-### Stop everything
-```bash
-docker compose stop      # pause the containers; keep everything
-docker compose down      # remove the containers; KEEP your database data
-docker compose down -v   # remove the containers AND delete all stored data
-```
-**Why:** `stop` is a pause button. `down` tears the containers down, but your data survives because it lives in Docker *volumes*. `down -v` also deletes those volumes, which is useful for a completely fresh start and destructive otherwise. You will lose all stored weather history.
-
-### After you change code
-| What you changed | What to run | Why |
-|---|---|---|
-| Files in `weather_etl/` or `dags/` and you use **Airflow** | nothing | Both folders are mounted into the Airflow containers, so edits apply immediately |
-| Files in `weather_etl/` and you use the **`app`** container | `docker compose build app` | The `app` image has its own copy of the code baked in |
-| `requirements.txt` | `docker compose up -d --build` | New packages must be installed into both images |
-
----
-
-## 🐍 Run it locally without Docker
-
-Good for development and debugging, because you can edit code and re-run instantly.
-
-### Step 1: Create and activate a virtual environment
-```bash
-python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-```
-**Why:** a virtual environment is a private folder of Python packages for this project only, so its dependencies cannot clash with other projects on your computer. You will see `(venv)` at the start of your prompt when it is active.
-
-### Step 2: Install the dependencies
-```bash
-pip install -r requirements.txt
-```
-**Why:** installs the three packages the pipeline needs (`requests`, `python-dotenv`, `psycopg2-binary`) at the versions the project was built with.
-
-### Step 3: Get a PostgreSQL database
-The easiest way is to let Docker run just the database:
-```bash
-docker compose up -d postgres
-```
-**Why:** starts only the `postgres` service, using the `DB_*` values from your `.env`, and publishes it on `localhost:DB_PORT`, which is where your local Python script will look. (If you would rather use a Postgres you installed yourself, create a database and user that match your `.env` instead.)
-
-Make sure `.env` has `DB_HOST=localhost`.
-
-### Step 4: Run the pipeline
-```bash
-cd weather_etl
-python pipeline.py
-```
-**Why `cd weather_etl` first:** the logger writes to a `logs/` folder relative to where you run the command, and the modules import each other by plain name (`from db import ...`). Running from inside `weather_etl/` keeps all of that consistent. (On older Windows PowerShell, run the two lines separately.)
-
-**You should see** the stage-by-stage log, ending in `PIPELINE COMPLETED SUCCESSFULLY` and a preview of the last five database rows:
-
-```text
-2026-09-09 08:31:05 | INFO     | pipeline     | STEP 1: EXTRACTING data from API...
-2026-09-09 08:31:11 | INFO     | extract      | Extraction complete — 9/9 cities successful
-2026-09-09 08:31:11 | INFO     | pipeline     | STEP 2: TRANSFORMING raw data...
-2026-09-09 08:31:11 | INFO     | pipeline     | STEP 3: VALIDATING data quality...
-2026-09-09 08:31:11 | INFO     | validate     | Validation complete — 9 passed, 0 failed
-2026-09-09 08:31:11 | INFO     | pipeline     | STEP 4: LOADING data...
-2026-09-09 08:31:12 | INFO     | load         | Successfully inserted 9 records into PostgreSQL
-2026-09-09 08:31:12 | INFO     | pipeline     | PIPELINE COMPLETED SUCCESSFULLY
-```
-*(abridged; the line format is exactly what the logger produces)*
-
-### Debug one stage at a time
-From inside `weather_etl/` with the virtual environment active:
-
-| Command | What it does | Why you would use it |
-|---|---|---|
-| `python extract.py` | Calls the API for all nine cities and logs the result | Quickest way to test that your API key works |
-| `python transform.py` | Transforms two built-in fake records and prints them | See the transform output with no internet, API key or database |
-| `python db.py` | Tests the database connection and creates the table | Check your `DB_*` settings before running the full pipeline |
-
-> **No database? The pipeline still runs.** If Postgres is unreachable, the database steps log an error and are skipped, and the CSV is still written. See [Design notes](#-design-notes-and-known-limitations).
-
-### When you are done
-```bash
-deactivate                       # leave the virtual environment
-docker compose stop postgres     # if you started Postgres via Docker
-```
-
----
-
-## 🧪 Run the tests
-
-```bash
-pip install pytest
-pytest tests/ -v
-```
-**Why:**
-- `pytest` is not in `requirements.txt` (it is a developer tool, not something the pipeline needs at run time), so install it once.
-- Run the command **from the project root**. `conftest.py` sits there and tells pytest where to find the modules inside `weather_etl/`; run from elsewhere and the imports fail.
-- `-v` prints each test by name, so you can see what passed.
-
-**Expected:** `14 passed`. The tests need no API key, no internet and no database. They cover:
-
-| Area | What is checked |
-|---|---|
-| `transform.py` (5 tests) | correct city name and temperature, all 11 fields present, one output per input, timestamp never empty |
-| `validate.py` (9 tests) | a good record passes; empty city name, temperature too high or too low, humidity below 0 or above 100, and min-greater-than-max all fail; `validate_all` keeps good records and drops bad ones; empty input is handled |
-
-> Plain `python -m unittest` will **not** work on its own, because it does not read `conftest.py`. Use pytest, or point Python at the code explicitly: `PYTHONPATH=weather_etl python -m unittest tests.test_pipeline -v` (PowerShell: set `$env:PYTHONPATH="weather_etl"` first).
-
----
-
-## 📂 Where your output ends up
-
-Different ways of running the pipeline write to different places. This is the most common source of "where did my CSV go?"
-
-| How you ran it | CSV file | Log file | Database |
-|---|---|---|---|
-| Docker `app` container (`docker compose up` / `docker compose run --rm app`) | `./output/weather_data.csv` | `./logs/` | `weather_data` table |
-| Airflow DAG | `./weather_etl/output/weather_data.csv` | `./weather_etl/logs/` | same `weather_data` table |
-| Local (`cd weather_etl && python pipeline.py`) | `./weather_etl/output/weather_data.csv` | `./weather_etl/logs/` | same `weather_data` table |
-
-All three write to the **same PostgreSQL table**, which is the reliable single source of truth. The CSV copies are separate files per route.
-
----
-
-## 📋 Command cheat sheet
-
-| Goal | Command |
-|---|---|
-| Start everything (first time or after dependency changes) | `docker compose up -d --build` |
-| Start everything (already built) | `docker compose up -d` |
-| See service status | `docker compose ps -a` |
-| Run the pipeline once, now | `docker compose run --rm app` |
-| Read the last pipeline run's log | `docker compose logs app` |
-| Follow Airflow live | `docker compose logs -f airflow-scheduler` |
-| Turn the schedule on | `docker compose exec airflow-scheduler airflow dags unpause sa_weather_etl_pipeline` |
-| Trigger an Airflow run now | `docker compose exec airflow-scheduler airflow dags trigger sa_weather_etl_pipeline` |
-| Count rows in the database | `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT COUNT(*) FROM weather_data;"'` |
-| Run only the database (for local runs) | `docker compose up -d postgres` |
-| Run tests | `pytest tests/ -v` |
-| Pause everything | `docker compose stop` |
-| Remove containers, keep data | `docker compose down` |
-| Remove containers **and all data** | `docker compose down -v` |
-
----
-
-## 📊 Data and database reference
-
-### Fields
-
-| Field | Type in PostgreSQL | Description |
-|---|---|---|
-| `id` | `SERIAL PRIMARY KEY` | Auto-incrementing row id (database only; not in the CSV) |
-| `city` | `VARCHAR(100)`, required | City name as returned by the API |
-| `province` | `VARCHAR(100)` | South African province |
-| `country` | `VARCHAR(10)`, required | Country code (`ZA`) |
-| `temperature_c` | `NUMERIC(5,2)` | Current temperature, °C |
-| `feels_like_c` | `NUMERIC(5,2)` | "Feels like" temperature, °C |
-| `temp_min_c` | `NUMERIC(5,2)` | Minimum temperature reported, °C |
-| `temp_max_c` | `NUMERIC(5,2)` | Maximum temperature reported, °C |
-| `humidity_percent` | `INTEGER` | Relative humidity, % |
-| `wind_speed_mps` | `NUMERIC(5,2)` | Wind speed, metres per second |
-| `condition` | `VARCHAR(200)` | Text description, e.g. `clear sky` |
-| `extracted_at` | `TIMESTAMP` | When the pipeline ran |
-
-### Sample rows (from a real run)
-
-| city | province | country | temperature_c | feels_like_c | temp_min_c | temp_max_c | humidity_percent | wind_speed_mps | condition | extracted_at |
-|---|---|---|---:|---:|---:|---:|---:|---:|---|---|
-| Johannesburg | Gauteng | ZA | 15.3 | 14.9 | 14.3 | 16.1 | 77 | 0.9 | clear sky | 2026-09-09 08:31:05 |
-| Cape Town | Western Cape | ZA | 15.9 | 16.0 | 15.2 | 15.9 | 96 | 5.1 | clear sky | 2026-09-09 08:31:05 |
-| Durban | KwaZulu-Natal | ZA | 24.2 | 24.4 | 23.5 | 24.2 | 66 | 0.5 | clear sky | 2026-09-09 08:31:05 |
-
-### Connect your own tools to the database
-While the `postgres` container is running, any SQL client (DBeaver, pgAdmin, Power BI, `psql`) can connect with:
-**host** `localhost` · **port** your `DB_PORT` · **database** your `DB_NAME` · **user/password** your `DB_USER` / `DB_PASSWORD`.
-
----
-
-## 📈 Dashboards (HTML and Power BI)
-
-**`dashboard.html`**: a self-contained visual dashboard (charts, run history, a searchable data table). Open it by double-clicking the file or dragging it into a browser; no server is needed, but you do need internet access, because it loads Chart.js and fonts from a CDN.
-
-> It is a **static snapshot**: the pipeline output was embedded into the file when it was generated (readings up to 2026-09-09). It does not read `output/weather_data.csv` live, so it will not show new runs until the embedded data is regenerated.
-
-**Power BI**: [`PowerBI.md`](PowerBI.md) is a copy-and-paste guide covering connecting to PostgreSQL or the CSV, the Power Query steps, DAX measures and a suggested report layout. Use your own `DB_NAME` where the guide shows a database name. Power BI connects to `localhost` and your `DB_PORT`, so the `postgres` container must be running.
-
----
-
-## 📝 Design notes and known limitations
-
-Understanding these will save you confusion, and they make good next improvements.
-
-| Behaviour | What it means |
-|---|---|
-| **History accumulates; no de-duplication** | Every run appends 9 new rows (about 36 a day on the 6-hour schedule). That is intentional for time-series analysis, but running the pipeline several times in a row adds near-identical rows. |
-| **`extracted_at` is run time, not observation time** | It is the pipeline's clock when it ran, which is usually UTC inside Docker containers (South Africa is UTC+2), not the moment OpenWeatherMap measured the weather. |
-| **A run can "succeed" without saving to the database** | If Postgres is unreachable, the load step logs an error but the pipeline still prints `PIPELINE COMPLETED SUCCESSFULLY`, and Airflow marks the task green. Always check the logs or the row count. |
-| **Failed records are dropped, not stored** | Records that fail validation are only recorded as warnings in the log; there is no "rejected records" table. |
-| **Partial API failures are tolerated** | If 1 of 9 cities fails, the other 8 are still loaded. If all 9 fail, the pipeline stops early. |
-| **Separate CSV per route** | See [Where your output ends up](#-where-your-output-ends-up). |
-
----
-
-## 🐛 Troubleshooting
-
-| Symptom | Likely cause | What to do |
-|---|---|---|
-| Log shows `Status: 401` | API key missing, wrong, or not activated yet | Check `API_KEY` in `.env` (no quotes or spaces). New keys can take up to a couple of hours to activate. Test with `cd weather_etl && python extract.py` |
-| `API_KEY is not set` in the log | `.env` is missing or not in the project root | The file must be named exactly `.env` and sit next to `docker-compose.yml` |
-| Log shows `Failed to connect to database` (local run) | Postgres not running, or wrong `DB_HOST`/`DB_PORT` | Run `docker compose up -d postgres`, set `DB_HOST=localhost`, then test with `python db.py` |
-| Connection problems inside Docker | `postgres` is not healthy yet | `docker compose ps -a`; wait for `healthy`, then `docker compose run --rm app` |
-| `password authentication failed` after you edited `DB_PASSWORD` | Postgres only applies the password the **first** time its data volume is created | If you do not need the old data: `docker compose down -v`, then `docker compose up -d --build` |
-| Port 5432 (or 8080) already in use | Another program is using it | Change `DB_PORT` in `.env` (e.g. `5433`), or stop the other program |
-| `docker compose ps` shows `app` as `Exited (0)` | Normal: it is a run-once job | Check `docker compose logs app` to confirm it loaded data |
-| Airflow login or "no username" init error | The Airflow entrypoint was overridden | Do not set a custom `entrypoint` on Airflow services; the image's own entrypoint registers `AIRFLOW_UID`. Let `airflow-init` run as defined |
-| Airflow cannot write to `weather_etl/output` (Linux) | `AIRFLOW_UID` does not match your user | Set `AIRFLOW_UID` to the output of `id -u` in `.env`, then `docker compose up -d --build` |
-| DAG not running on schedule | DAG is still paused | Toggle it on in the UI or run the `dags unpause` command above |
-| CSV has no header, or columns look shifted | An old CSV from before the `province` column was added is being appended to | Back up the old file, delete it, and run the pipeline again so a correct one is created |
-| `ModuleNotFoundError` | Virtual environment not active, or packages not installed | `source venv/bin/activate` then `pip install -r requirements.txt` |
-| Tests fail with `ModuleNotFoundError: transform` | Not run from the project root, or run with plain `unittest` | `cd` to the project root and run `pytest tests/ -v` |
-
----
-
-## 🗺️ Roadmap
-
-- [x] PostgreSQL integration
-- [x] Apache Airflow scheduling
-- [x] Docker support
-- [x] Data quality validation
-- [x] Logging
-- [x] Unit tests
-- [x] All nine South African provinces
-- [x] HTML dashboard (static snapshot)
-- [ ] Power BI report (setup guide ready in [`PowerBI.md`](PowerBI.md))
-- [ ] Dashboard that refreshes automatically from the database
-- [ ] Store the API's observation time and de-duplicate repeated readings
-- [ ] Make a failed database load fail the Airflow task
-
----
-
-## 🤝 Contributing, author, license
-
-**Contributing:** fork the repository, create a feature branch, commit your changes, push, and open a Pull Request. Please run `pytest tests/ -v` first.
-
-**Author: Letsoenyo Clen Bongane**, aspiring Data Engineer passionate about building scalable data pipelines and turning raw data into meaningful insights.
-
-- 💼 LinkedIn: https://linkedin.com/in/Bongane_Clen
-- 💻 GitHub: https://github.com/Bongane0606
-
-**Why I built this:** to learn the fundamentals of data engineering beyond the ETL steps themselves: data-quality validation, structured logging, a persistent database sink, scheduled orchestration, and containerisation. It started as a four-city script and grew into a pipeline covering every South African province.
-
-**License:** MIT. Feel free to use, modify and distribute it under the licence terms.
-
-⭐ If you found this useful, consider starring the repo.
-
-WTC-R8WUGX63
+Check the scheduler logs:
+docker compose logs --tail=100 airflow-scheduler
+Airflow has its own separate PostgreSQL database for scheduling information. The weather readings remain in the postgres database.
+</details>
+<a id="10-explore-the-flask-api-optional"></a>
+<details id="step-10">
+<summary><strong>10. Explore the Flask API (optional)</strong></summary>
+An API is a way for one program to request information from another. The Flask API reads stored data; it does not write to the database.
+
+Try these addresses in a browser, or use curl:
+curl http://localhost:5050/api/health
+curl http://localhost:5050/api/cities
+curl http://localhost:5050/api/summary
+curl http://localhost:5050/api/latest
+curl 'http://localhost:5050/api/history?city=Johannesburg&limit=10'
+/api/cities lists available cities; /api/summary reports totals and averages; /api/latest returns the latest readings; /api/history returns saved historical observations. The history endpoint supports a limit of up to 1,000 records.
+</details>
+<a id="11-run-automated-tests-for-developers-and-assessors"></a>
+<details id="step-11">
+<summary><strong>11. Run automated tests (for developers and assessors)</strong></summary>
+Automated tests are short programs that check whether the project behaves correctly. They do not need your real API key or a live PostgreSQL database because the tests use mocks (simulated responses and database connections).
+
+Check Python:
+python3 --version
+If Python's virtual environment package is missing on Ubuntu/Pop!_OS:
+sudo apt update
+sudo apt install python3-venv python3-pip
+Create a private Python environment, activate it, and install testing dependencies:
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m pip install -r dashboard_api/requirements.txt
+python3 -m pip install pytest pytest-cov
+Run every test:
+python3 -m pytest tests/ -v
+Generate a code coverage report:
+python3 -m pytest tests/ -v \
+  --cov=weather_etl \
+  --cov=dashboard_api \
+  --cov-report=term-missing \
+  --cov-report=html
+Open the visual report:
+xdg-open htmlcov/index.html
+Verified project result on 9 November 2026: 44 tests passed, 0 failed, 83% statement coverage. These are the results from the tested project at that point in time; your results may differ after code changes. 83% coverage does not mean 83% of all possible errors are prevented.
+
+To leave the Python virtual environment:
+deactivate
+</details><a id="12-everyday-commands--quick-reference"></a>
+<details id="step-12">
+<summary><strong>12. Everyday commands — quick reference</strong></summary>
+All commands below should be run from the folder containing docker-compose.yml.
+What you want to do	Command
+Start database and dashboard	docker compose up -d postgres dashboard
+Open dashboard	http://localhost:5050
+Collect new readings once	docker compose run --rm app
+See running containers	docker compose ps
+View dashboard errors	docker compose logs --tail=100 dashboard
+View database errors	docker compose logs --tail=100 postgres
+Follow live logs	docker compose logs -f dashboard (press Ctrl+C to stop watching)
+Start Airflow	docker compose up -d airflow-init airflow-webserver airflow-scheduler
+Open Airflow	http://localhost:8080
+Run all tests	python3 -m pytest tests/ -v
+Stop services, keep data	docker compose down
+Restart dashboard after code changes	docker compose up -d --build dashboard
+
+
+Stop the application safely
+docker compose down
+This stops and removes the containers but keeps database volumes, so stored weather history remains available next time.
+
+Danger — do not run this unless you intentionally want to erase your database and Airflow history:
+docker compose down -v
+The -v option removes Docker volumes and can permanently delete stored data. It is not needed for normal use.
+</details>
+<a id="13-project-folders-explained"></a>
+<details id="step-13">
+<summary><strong>13. Project folders explained</strong></summary>sa-weather-etl-pipeline/
+├── dashboard_api/              Flask backend and frontend files
+│   ├── app.py                  API endpoints
+│   ├── static/                 Web page assets
+│   └── Dockerfile              Dashboard container instructions
+├── weather_etl/                Data collection and cleaning code
+│   ├── extract.py              Download weather readings
+│   ├── transform.py            Reorganize weather data
+│   ├── validate.py             Check data quality
+│   ├── load.py                 Save to CSV and PostgreSQL
+│   ├── db.py                   Database helpers
+│   └── pipeline.py             Run all ETL steps
+├── dags/                       Airflow scheduled workflow
+├── docker/airflow/             Airflow Docker image
+├── tests/                      Automated unit tests
+├── output/                     Generated CSV weather readings
+├── logs/                       Generated log files
+├── docker-compose.yml          Defines all Docker services
+├── requirements.txt            Python ETL dependencies
+├── .env                        Private configuration — DO NOT COMMIT
+└── README.md                   This guide
+</details><a id="14-troubleshooting-common-beginner-problems"></a>
+<details id="step-14">
+<summary><strong>14. Troubleshooting (common beginner problems)</strong></summary>Problem	What it means / how to fix it
+no such service: dashboard	You are in the wrong project folder or have an old Compose file. Run pwd, ls, and docker compose config --services.
+DB_PASSWORD variable is not set	Your .env file is missing, incomplete, or in the wrong directory. Revisit Step 5.
+role "root" does not exist	The PostgreSQL username was not passed. Use the exact docker compose exec postgres sh -c 'psql ...' examples in Step 8.
+python: command not found	Use python3 instead.
+tests/test_dashboard_api.py not found	Make sure you are in the correct folder and the tests are inside its tests/ directory.
+localhost:5050 does not load	Run docker compose ps and docker compose logs --tail=100 dashboard; check whether port 5050 is occupied.
+port is already allocated	Another program uses the port. For the dashboard, change "5050:5000" to "5051:5000" in docker-compose.yml, restart, and open http://localhost:5051.
+Dashboard opens but shows zero records	Run docker compose run --rm app, check API key and logs, then refresh the page.
+Weather API responds with 401	The API key is missing, incorrect, or not activated yet.
+relation "weather_data" does not exist	The weather table has not been created. Run the ETL pipeline once.
+Chart is blank but cards appear	Check your internet connection; Chart.js is loaded from an external CDN.
+Airflow doesn't run automatically	Start its scheduler and webserver, then make sure the DAG is unpaused.
+Tests fail due to missing Python packages	Activate .venv and reinstall the requirements from Step 11.
+
+
+For more detailed diagnosis, run:
+docker compose ps -a
+docker compose logs --tail=100 postgres dashboard
+Do not post your .env file, passwords, API key, or unredacted configuration output when asking for help.
+</details>
+<a id="15-known-limitations-and-future-improvements"></a>
+<details id="step-15">
+<summary><strong>15. Known limitations and future improvements</strong></summary>- The dashboard displays recorded observations, not forecasts or guaranteed real-time conditions.
+- Weather readings depend on a valid API key and a successful pipeline run.
+- The dashboard does not currently show the true Airflow run state; it shows data retrieved from PostgreSQL.
+- The CSV and PostgreSQL stores are populated by the pipeline; the dashboard does not automatically import a CSV into PostgreSQL.
+- Airflow's demo login is not secure for a publicly exposed server.
+- The current test suite focuses on Python unit tests. End-to-end browser testing and production deployment are possible future improvements.
+</details><a id="16-a-simple-presentation-script"></a>
+<details id="step-16">
+<summary><strong>16. A simple presentation script</strong></summary>“I built a South African weather data engineering system. It collects weather information from an external service, organizes it, checks for incorrect readings, and saves the results in a database and CSV file. Apache Airflow can repeat this process automatically every six hours. I also built a web dashboard so people can understand the information without writing code. Finally, I tested the system with 44 automated tests, which all passed, and measured 83% code coverage.”
+
+Project type: Data Engineering elective · Dashboard: Flask + JavaScript · Database: PostgreSQL · Automation: Apache Airflow · Deployment: Docker Compose
+</details>💬 Beginner questions
+<details>
+<summary><strong>Do I need to know how to code?</strong></summary>No. To view the dashboard, follow the Docker setup and open the local address. The tests and API sections are optional.
+</details><details>
+<summary><strong>Will I see today's weather?</strong></summary>
+Not necessarily. The charts show observations already stored by the ETL pipeline. Run the pipeline again to add new readings.
+</details><details>
+<summary><strong>Can I share the localhost link with a friend?</strong></summary>
+No. localhost refers to the computer running Docker. Public hosting would require separate deployment and security configuration.
+</details><details>
+<summary><strong>What if I make a mistake?</strong></summary>
+Use the troubleshooting section above. docker compose down stops services without deleting stored database volumes. Avoid docker compose down -v unless you intentionally want to delete stored data.
+</details><div align="center">Built as a Data Engineering elective project — Python · PostgreSQL · Airflow · Flask · Docker
+</div>
